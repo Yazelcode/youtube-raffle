@@ -1,0 +1,26 @@
+async function startDraw() {
+    const videoUrl = document.getElementById('videoUrl').value;
+    const videoId = extractVideoId(videoUrl);
+    const apiKey = 'YOUR_API_KEY';  // استبدل YOUR_API_KEY بمفتاح API الخاص بك
+
+    try {
+        const videoData = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=statistics`).then(res => res.json());
+        const commentsData = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?videoId=${videoId}&key=${apiKey}&part=snippet&maxResults=100`).then(res => res.json());
+
+        const comments = commentsData.items.map(item => item.snippet.topLevelComment.snippet);
+        const winnerComment = comments[Math.floor(Math.random() * comments.length)];
+        
+        const subscriptionsData = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&forChannelId=${winnerComment.authorChannelId.value}&key=${apiKey}`).then(res => res.json());
+
+        const isSubscribed = subscriptionsData.items.length > 0;
+
+        document.getElementById('result').innerHTML = `الفائز: ${winnerComment.authorDisplayName} <br> التعليق: ${winnerComment.textDisplay} <br> ${isSubscribed ? 'مشترك' : 'غير مشترك'}`;
+    } catch (error) {
+        document.getElementById('result').innerHTML = 'حدث خطأ، يرجى المحاولة مرة أخرى';
+    }
+}
+
+function extractVideoId(url) {
+    const urlParams = new URLSearchParams(new URL(url).search);
+    return urlParams.get('v');
+}
